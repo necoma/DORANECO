@@ -7,6 +7,8 @@ import (
 
 /*
 {
+	"runningUserId": 1001,
+	"runningGroupId": 1001,
 	"sFlowListener":{
 		"listen": "0.0.0.0:6343",
 		"maxPacketCount": 100000,
@@ -63,6 +65,8 @@ type WatcherConfig struct {
 	NetFlowListener      NetFlowListenerConfig  `json:"netFlowListener"`
 	HttpServer           HttpServerConfig       `json:"httpServer"`	
 	NECOMAtter           MewUserData            `json:"necomatter"`
+	RunningUserId        int                    `json:"runningUserId"`
+	RunningGroupId       int                    `json:"runningGroupId"`
 }
 
 func ReadConfig(filename string) (*WatcherConfig, error) {

@@ -1,4 +1,6 @@
 {
+	"runningUserId": 1001,
+	"runningUserGroup": 1001,
 	"sFlowListener":{
 		"listen": ":6343",
 		"maxPacketCount": 50000,

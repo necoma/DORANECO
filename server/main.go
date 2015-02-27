@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"os"
 	"bytes"
+	"syscall"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/auth"
@@ -154,6 +155,13 @@ func martini_main(listen string, l4HeaderBuffer *L3HeaderBuffer, alertBuffer *Al
 	m.RunOnAddr(listen)
 }
 
+func SwitchUser(uid int, gid int){
+	if syscall.Getuid() == 0 {
+		syscall.Setgid(gid)
+		syscall.Setuid(uid)
+	}
+}
+
 func main(){
 	configFile := "config.json"
 	if len(os.Args) > 1 {
@@ -171,6 +179,7 @@ func main(){
 	netFlowAlertBuffer := MakeNetFlowAlertBuffer(watcherConfig.NetFlowListener.MaxAlertCount)
 
 	go martini_main(watcherConfig.HttpServer.Listen, l3HeaderBuffer, alertBuffer, netFlowBuffer, netFlowAlertBuffer, watcherConfig.HttpServer.BasicAuthUser, watcherConfig.HttpServer.BasicAuthPassword)
+	SwitchUser(watcherConfig.RunningUserId, watcherConfig.RunningGroupId)
 	
 	stopChannel := make(chan bool)
 	go PortWatcher(stopChannel,
