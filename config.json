@@ -1,0 +1,29 @@
+{
+	"sFlowListener":{
+		"listen": ":6343",
+		"maxPacketCount": 50000,
+		"maxAlertCount": 1024,
+		"alertPortList": [
+			123, 53, 161, 1900
+		],
+		"alertTickTimeSecond": 60
+	},
+	"netFlowListener":{
+		"listen": ":2055",
+		"maxPacketCount": 50000,
+		"maxAlertCount": 1024,
+		"alertTargetMap": {
+			"443": 300
+		}
+	},
+	"httpServer":{
+		"listen": ":3000",
+		"basicAuthUser": "user name",
+		"basicAuthPassword": "password"
+	},
+	"necomatter":{
+		"userName": "user name",
+		"apiKey": "api key"
+	}
+}
+

@@ -1,0 +1,85 @@
+html, body {
+	height: 100%;
+	min-height: 100%;
+	margin: 1;
+	padding: 1;
+}
+
+#PoweredByNECOMA {
+	position: fixed;
+	top: 4px;
+	right: 4px;
+	border:1px solid #888888;
+	padding:2pt;
+	background-color: #ffffff;
+	filter:alpha(opacity=85);
+	-moz-opacity:0.85;
+	-khtml-opacity: 0.85;
+	opacity:0.85;
+     
+	text-shadow: 0 -1px 1px #FFF, -1px 0 1px #FFF, 1px 0 1px #aaa; 
+	-webkit-box-shadow: 1px 1px 2px #E7E7E7;
+	-moz-box-shadow: 1px 1px 2px #E7E7E7; 
+	-webkit-border-radius: 3px; 
+	-moz-border-radius: 3px;
+}
+
+#PoweredByNECOMA_IMG {
+	height: 30px;
+	width: 120px;
+}
+
+#GraphBody {
+	height: 100%;
+	min-height: 100%;
+}
+
+/*
+.AddressPortTableWindow {
+	position: absolute;
+	top: 5%;
+	left: 420px;
+	width: 40%;
+	height: 40%;
+	border: 1;
+}
+
+.AddressPortTableWindow close {
+	position: absolute;
+	right: 20px;
+	top: 1px;
+}
+*/
+
+.horizontal-divider {
+	height: 5px;
+	bottom: 50%;
+	background: #aaa;
+}
+
+.vertical-divider {
+	right: 50%;
+	width: 5px;
+	background: #aaa;
+}
+
+.left-component {
+	right: 50%;
+	width: 50%;
+	margin-right: 5px;
+}
+
+.right-component {
+	width: 50%;
+}
+
+.top-component {
+	bottom: 50%;
+	height: 50%;
+	margin-bottom: 5px;
+}
+
+.bottom-component {
+	height: 50%;
+	margin-height: 5px;
+}
