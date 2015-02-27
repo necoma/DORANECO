@@ -292,6 +292,17 @@ function ConvertCountMapToSortedList(countMap){
 	return tmpList;
 }
 
+// {"port": port, "count": count, "flowList": []} の配列を受け取って、
+// {"port": 0, "count": count, "flowList": []} にまとめます
+function ConcatCountMapList(countedList){
+	var newFlowList = [];
+	for( var i = 0; i < countedList.length; i++ ){
+		Array.prototype.push.apply(newFlowList, countedList[i].flowList);
+	}
+	return {"port": "0", "count": newFlowList.length, "flowList": newFlowList};
+}
+
+
 // 反転した色を作ります
 // http://yasu0120.blog130.fc2.com/blog-entry-21.html
 function CreateInverseColor(color){
@@ -320,33 +331,22 @@ function ConvertSortedListToGraphDataList(sortedList){
 	color = d3.scale.category20();
 	for (var i = 0; i < sortedList.length; i++ ){
 		var data = sortedList[i];
-		sortedList[i].title = data.port + " (" + data.count + ")";
-		sortedList[i].color = color(data.port % 20);
-		//sortedList[i].textColor = color((data.port+2) % 20);
-		sortedList[i].textColor = CreateInverseColor(sortedList[i].color);
-		sortedList[i]["dateTime"] = new Date();
+		if(data.port <= 0){
+			sortedList[i].title = "others";
+			sortedList[i].color = "#ffffff";
+			sortedList[i].textColor = "#000000";
+			sortedList[i]["dateTime"] = new Date();
+		}else{
+			sortedList[i].title = data.port + " (" + data.count + ")";
+			sortedList[i].color = color(data.port % 20);
+			//sortedList[i].textColor = color((data.port+2) % 20);
+			sortedList[i].textColor = CreateInverseColor(sortedList[i].color);
+			sortedList[i]["dateTime"] = new Date();
 
-		//console.log("color: ", sortedList[i].port, " to ", color(sortedList[i].port % 20), " 22 -> ", color(22 % 20));
+			//console.log("color: ", sortedList[i].port, " to ", color(sortedList[i].port % 20), " 22 -> ", color(22 % 20));
+		}
 	}
 	return sortedList;
-}
-
-// 与えられたデータリストの count を書き換えて返します
-function ModifyData(dataList){
-	// 新しく生成して返すことにします。
-	var resultList = [];
-	var del = Math.random() * 4;
-	for(var i = 0; i < (dataList.length - del); i++){
-		var data = dataList[i];
-		var newData = Math.random() * 100;
-		resultList[i] = {};
-		resultList[i]["color"] = data["color"];
-		resultList[i]["title"] = data["title"];
-		resultList[i]["textColor"] = data["textColor"];
-		resultList[i]["count"] = newData;
-		resultList[i]["dateTime"] = new Date();
-	}
-	return resultList;
 }
 
 var dataList = originalDataList.concat();
@@ -473,10 +473,14 @@ function LoadNewData(tcpObj, udpObj){
 		var udpSortedList = ConvertCountMapToSortedList(udpCountMap);
 			
 		if (tcpSortedList.length > 20) {
+			var dropedPackets = ConcatCountMapList(tcpSortedList.slice(20));
 			tcpSortedList = tcpSortedList.slice(0, 20);
+			tcpSortedList.push(dropedPackets);
 		}
 		if (udpSortedList.length > 20) {
+			var dropedPackets = ConcatCountMapList(udpSortedList.slice(20));
 			udpSortedList = udpSortedList.slice(0, 20);
+			udpSortedList.push(dropedPackets);
 		}
 		var tcpNewGraphData = ConvertSortedListToGraphDataList(tcpSortedList);
 		DrawArchGraph(tcpObj, tcpNewGraphData, 300);

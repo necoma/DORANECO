@@ -232,152 +232,6 @@ function NetFlowProcessPacketDataToCountData(packetDataList){
 	return portDictionary;
 }
 
-// {"port": count} の形式の map を count で sort してリストにして [{"port": "port", "count": count},,.]の返します
-// memo: SFlow と同じのはず
-function NetFlowConvertCountMapToSortedList(countMap){
-	var tmpList = [];
-	for( var key in countMap ){
-		var data = countMap[key];
-		tmpList.push({"port": key, "count": data.count, "flowList": data.flowList});
-	}
-	tmpList.sort(function(a, b){
-		if(a.count > b.count){
-			return -1;
-		}
-		if(a.count < b.count){
-			return 1;
-		}
-		return 0;
-	});
-	return tmpList;
-}
-
-// sort されたリストからグラフ用のデータリストに変換します
-// memo: SFlow と同じのはず
-function NetFlowConvertSortedListToGraphDataList(sortedList){
-	color = d3.scale.category20();
-	for (var i = 0; i < sortedList.length; i++ ){
-		var data = sortedList[i];
-		sortedList[i].title = data.port + " (" + data.count + ")";
-		sortedList[i].color = color(data.port % 20);
-		sortedList[i].textColor = color((data.port+2) % 20);
-		sortedList[i].textColor = CreateInverseColor(sortedList[i].color);
-		sortedList[i]["dateTime"] = new Date();
-
-		//console.log("color: ", sortedList[i].port, " to ", color(sortedList[i].port % 20), " 22 -> ", color(22 % 20));
-	}
-	return sortedList;
-}
-
-// targetSelector に svg を追加してその中に width/height の大きさの円グラフを描くための箱を作って返します
-// SFlow と同じはず
-function NetFlowCreateSVGArcGraphCanbas(targetSelector, width, height, clickEventHandler)
-{
-	var graphObj = {};
-
-	// 指定されたセレクタの中に <svg>...</svg> を作る
-	var svg = d3.select(targetSelector)
-		.append("svg")
-	// svg に width, height の attribute をつける
-	svg
-		.attr("width", width)
-		.attr("height", height)
-
-	// d3.layout.pie() で、sort せずに、値の ["percentage"] を値として使う関数を作る
-	var pie = d3.layout.pie().sort(null).value(function(d){return d["count"];});
-	// d3.svg.arc() で innerRadius, outerRadius を指定した関数を作る
-	var arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-
-	// 円弧になる path の style
-	var pathStyle = {
-		fill: function(d){return d.data["color"];}
-		, d: arc
-		, stroke: "white"
-	}
-
-	// 文字を表示するための text の style
-	var textStyle = {
-		"transform": function(d) {
-			d.innerRadius = innerRadius;
-			d.outerRadius = outerRadius;
-			return "translate(" + arc.centroid(d) + ")";
-		}
-		, "fill": function(d){return d.data['textColor'] }
-		, "text-anchor": "middle"
-	};
-
-	// 作った svg等 を graphObj に格納
-	graphObj.svg = svg;
-	//graphObj.svg_g = svg_g;
-	graphObj.pie = pie;
-	graphObj.arc = arc;
-	graphObj.pathStyle = pathStyle;
-	graphObj.textStyle = textStyle;
-	graphObj.clickEventHandler = clickEventHandler;
-	graphObj.width = width;
-	graphObj.height = height;
-
-	return graphObj;
-}
-// CreateSVGArcGraphCanbas で作った graphObj に、newDataList で指示される円グラフを描きます
-// duration が 0 より大きければ、指定された時間(ミリ秒)で新しい値まで遷移するようにします
-// SFlow と同じはず
-function DrawArchGraph(graphObj, newDataList, duration){
-	//console.log("draw", newDataList);
-
-	// svg.g.arc を作る準備をする
-	var dataInjectedArcGroup = graphObj.svg
-		.selectAll("g.arc")
-		.data(graphObj.pie(newDataList));
-
-	// 既存の円弧を書き換える
-	dataInjectedArcGroup
-		.select("path")
-		.transition()
-		.attr(graphObj.pathStyle)
-		.duration(duration)
-		;
-	dataInjectedArcGroup
-		.select("text")
-		.transition()
-		.attr(graphObj.textStyle)
-		.duration(duration)
-		.text(function(d){return d.data["title"];});
-
-	// 円弧一つづつ用の g を追加する
-	var appendedArcGroup = dataInjectedArcGroup
-		.enter()
-		.append("g")
-		.attr("class", "arc")
-		.attr("transform", "translate(" + graphObj.width / 2 + "," + graphObj.height / 2 + ")")
-		.on("click", function(d){if(graphObj.clickEventHandler){graphObj.clickEventHandler(d.data);}})
-		;
-
-	// 円弧を表示するための svg.g.path を作る
-	appendedArcGroup
-		.append("svg:path")
-		.transition()
-		.attr(graphObj.pathStyle)
-		.duration(duration)
-		;
-
-	// svg.g.text を作る
-	appendedArcGroup
-		.append("svg:text")
-		.transition()
-		.attr(graphObj.textStyle)
-		.duration(duration)
-		.text(function(d){return d.data["title"];});  
-
-	// svg.g.* のいらないものを削除
-	dataInjectedArcGroup
-		.exit()
-		.transition()
-		.attr("transform", "scale(0,0)")
-		.duration(duration)
-		.remove()
-}
-
 // データを読み込んで反映させます
 function NetFlowLoadNewData(tcpObj, udpObj){
 	var duration = 10;
@@ -393,10 +247,14 @@ function NetFlowLoadNewData(tcpObj, udpObj){
 		var udpSortedList = ConvertCountMapToSortedList(udpCountMap);
 			
 		if (tcpSortedList.length > 20) {
+			var dropedPackets = ConcatCountMapList(tcpSortedList.slice(20));
 			tcpSortedList = tcpSortedList.slice(0, 20);
+			tcpSortedList.push(dropedPackets);
 		}
 		if (udpSortedList.length > 20) {
+			var dropedPackets = ConcatCountMapList(udpSortedList.slice(20));
 			udpSortedList = udpSortedList.slice(0, 20);
+			udpSortedList.push(dropedPackets);
 		}
 		var tcpNewGraphData = ConvertSortedListToGraphDataList(tcpSortedList);
 		DrawArchGraph(tcpObj, tcpNewGraphData, 300);
