@@ -333,7 +333,7 @@ function ConvertSortedListToGraphDataList(sortedList){
 		var data = sortedList[i];
 		if(data.port <= 0){
 			sortedList[i].title = "others";
-			sortedList[i].color = "#ffffff";
+			sortedList[i].color = "#eeeeee";
 			sortedList[i].textColor = "#000000";
 			sortedList[i]["dateTime"] = new Date();
 		}else{
