@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-/*
+/* example
 {
 	"runningUserId": 1001,
 	"runningGroupId": 1001,
@@ -15,6 +15,9 @@ import (
 		"maxAlertCount": 1024,
 		"alertPortList": [
 			123, 53, 161, 1900
+		],
+		"alertPortRangeList": [
+			{"low": 1024, "high": 32768}
 		],
 		"alertTickTimeSecond": 60
 	},
@@ -28,7 +31,7 @@ import (
 		"listen": "0.0.0.0:30000",
 		"basicAuthUser": "hello",
 		"basicAuthPassword": "world"
-	}
+	},
 	"necomatter":{
 		"userName": "iimura",
 		"apiKey": ""
@@ -36,13 +39,18 @@ import (
 }
 */
 
+type PortRange struct {
+	Low      int     `json:"low"`
+	High     int     `json:"high"`
+}
 
 type SFlowListenerConfig struct {
-	Listen               string   `json:"listen"`
-	MaxPacketCount       int      `json:"maxPacketCount"`
-	MaxAlertCount        int      `json:"maxAlertCount"`
-	AlertPortList        []int    `json:"alertPortList"`
-	AlertTickTimeSecond  int      `json:"alertTickTimeSecond"`
+	Listen               string      `json:"listen"`
+	MaxPacketCount       int         `json:"maxPacketCount"`
+	MaxAlertCount        int         `json:"maxAlertCount"`
+	AlertPortList        []int       `json:"alertPortList"`
+	AlertTickTimeSecond  int         `json:"alertTickTimeSecond"`
+	AlertPortRangeList   []PortRange `json:"alertPortRangeList"`
 }
 
 type NetFlowAlertTargetMap map[string]float64

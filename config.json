@@ -8,6 +8,9 @@
 		"alertPortList": [
 			123, 53, 161, 1900
 		],
+		"alertPortRangeList": [
+			{"low": 1025, "high": 32768}
+		],
 		"alertTickTimeSecond": 60
 	},
 	"netFlowListener":{

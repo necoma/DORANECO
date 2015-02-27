@@ -62,6 +62,7 @@ func CalcMaxCountPort(counter PacketPortMap) (uint16, []*FlowEthernetISO8023) {
 func PortWatcher(stopChannel chan bool,
 	durationSecond int,
 	watchPortList []int,
+	watchPortRangeList []PortRange,
 	l3HeaderBuffer *L3HeaderBuffer,
 	alertBuffer *AlertBuffer,
 	mewUserData *MewUserData) {
@@ -86,8 +87,16 @@ func PortWatcher(stopChannel chan bool,
 		maxPort, maxPacketList := CalcMaxCountPort(portCount)
 
 		hit := false
+		maxPortInt := int(maxPort)
 		for i := 0; i < len(watchPortList); i++ {
-			if (int(maxPort) == watchPortList[i]) {
+			if (maxPortInt == watchPortList[i]) {
+				hit = true
+				break
+			}
+		}
+		for i := 0; i < len(watchPortRangeList) && hit != true; i++ {
+			portRange := watchPortRangeList[i]
+			if (maxPortInt >= portRange.Low && maxPortInt <= portRange.High) {
 				hit = true
 				break
 			}

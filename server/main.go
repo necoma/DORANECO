@@ -178,13 +178,20 @@ func main(){
 	netFlowBuffer := MakeNetFlowBuffer(watcherConfig.NetFlowListener.MaxPacketCount)
 	netFlowAlertBuffer := MakeNetFlowAlertBuffer(watcherConfig.NetFlowListener.MaxAlertCount)
 
-	go martini_main(watcherConfig.HttpServer.Listen, l3HeaderBuffer, alertBuffer, netFlowBuffer, netFlowAlertBuffer, watcherConfig.HttpServer.BasicAuthUser, watcherConfig.HttpServer.BasicAuthPassword)
+	go martini_main(watcherConfig.HttpServer.Listen,
+		l3HeaderBuffer,
+		alertBuffer,
+		netFlowBuffer,
+		netFlowAlertBuffer,
+		watcherConfig.HttpServer.BasicAuthUser,
+		watcherConfig.HttpServer.BasicAuthPassword)
 	SwitchUser(watcherConfig.RunningUserId, watcherConfig.RunningGroupId)
 	
 	stopChannel := make(chan bool)
 	go PortWatcher(stopChannel,
 		watcherConfig.SFlowListener.AlertTickTimeSecond,
 		watcherConfig.SFlowListener.AlertPortList,
+		watcherConfig.SFlowListener.AlertPortRangeList,
 		l3HeaderBuffer,
 		alertBuffer,
 		&watcherConfig.NECOMAtter)
