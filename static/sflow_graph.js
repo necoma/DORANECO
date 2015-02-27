@@ -543,21 +543,7 @@ function LoopLoadAlertLog(alertDivSelector, LogTabSelector, interval){
 }
 
 function InitSFlowAlertLog(alertDivSelector, interval, LogTabSelector){
-	//LoadAlertLog(alertDivSelector, LogTabSelector);
 	LoopLoadAlertLog(alertDivSelector, LogTabSelector, interval);
-	/*
-	var prevRequestTime = new Date();
-	setInterval(function(){
-		// 長いこと表示されてないと setInterval が山ほど呼ばれるらしいので無視するようなのを入れます
-		var now = new Date();
-		var msec = now - prevRequestTime;
-		if(msec < interval){
-			return;
-		}
-		prevRequestTime = now;
-		LoadAlertLog(alertDivSelector, LogTabSelector);
-	}, interval);
-	*/
 }
 
 // sflow のグラフを描くコンポーネントを作ります。

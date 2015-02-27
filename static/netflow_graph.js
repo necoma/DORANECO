@@ -289,7 +289,7 @@ function NetFlowInjectPacketListIDFromAlertDataList(alertDataList){
 	return {alertList: newAlertDataList};
 }
 // alert の結果を popup します。
-function AlertPopup(alertDataList, LogTabSelector){
+function NetFlowAlertPopup(alertDataList, LogTabSelector){
 	NetFlowPopupSortUniqedFlowDataList(NetFlowPacketListSortUniq_SrcIP(alertDataList), LogTabSelector);
 	NetFlowPopupFlowDataList(alertDataList, LogTabSelector);
 };
@@ -301,7 +301,7 @@ function NetFlowDrawAlertTable(alertDivSelector, alertDataList, LogTabSelector){
 
 	for(var i = 0; i < alertDataListWithPacketListID.alertList.length; i++){
 		var data = alertDataListWithPacketListID.alertList[i];
-		var popupFuncBinded = AlertPopup.bind(null, data).bind(null, LogTabSelector);
+		var popupFuncBinded = NetFlowAlertPopup.bind(null, data).bind(null, LogTabSelector);
 		$(alertDivSelector + " #" + data.packetListID).click(popupFuncBinded);
 	}
 }
