@@ -8,13 +8,13 @@ import (
 
 type AlertData struct {
 	Port        uint16                   `json:"port"`
-	Time        time.Time                `json:"time"`
+	Time        jsonTime                 `json:"time"`
 	PacketList  []*FlowEthernetISO8023   `json:"packetList"`
 }
 
 type AlertBuffer struct {
 	MaxLength    int
-	AlertList *list.List
+	AlertList    *list.List
 }
 
 func MakeAlertBuffer(maxLength int) *AlertBuffer{
@@ -42,7 +42,7 @@ func (buf AlertBuffer) AddPacketList(port uint16, data []*FlowEthernetISO8023) e
 	if ( data == nil ) {
 		return fmt.Errorf("nil input")
 	}
-	alertData := &AlertData{port, time.Now(), data}
+	alertData := &AlertData{port, jsonTime{time.Now()}, data}
 
 	return buf.AddAlertData(alertData)
 }

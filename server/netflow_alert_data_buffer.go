@@ -8,7 +8,7 @@ import (
 
 type NetFlowAlertData struct {
 	Port        int           `json:"port"`
-	Time        time.Time     `json:"time"`
+	Time        jsonTime     `json:"time"`
 	Duration    time.Duration `json:"duration"`
 	Flow        string        `json:"flow"`
 }
@@ -43,7 +43,7 @@ func (buf NetFlowAlertBuffer) AddAlert(port int, duration time.Duration, flow st
 	if ( flow == "" ) {
 		return fmt.Errorf("nil input")
 	}
-	alertData := &NetFlowAlertData{port, time.Now(), duration, flow}
+	alertData := &NetFlowAlertData{port, jsonTime{time.Now()}, duration, flow}
 
 	return buf.AddAlertData(alertData)
 }
