@@ -1,8 +1,8 @@
-var width = 400;
-var height = 340;
-var outerRadius = Math.min(width, height) / 2 - 5;
-var innerRadius = outerRadius * 0.2;
-var duration = 2000;
+//var width = 400;
+//var height = 340;
+//var outerRadius = Math.min(width, height) / 2 - 5;
+//var innerRadius = outerRadius * 0.2;
+//var duration = 2000;
 
 var originalDataList = [
 	{ "color": "#ff0000", "title": "ff0000", "count": 100, "textColor": "#000000" }
@@ -257,10 +257,10 @@ function NetFlowLoadNewData(tcpObj, udpObj){
 			udpSortedList.push(dropedPackets);
 		}
 		var tcpNewGraphData = ConvertSortedListToGraphDataList(tcpSortedList);
-		DrawArchGraph(tcpObj, tcpNewGraphData, 300);
+		DrawArchGraph(tcpObj, tcpNewGraphData, 300, 1.0);
 
 		var udpNewGraphData = ConvertSortedListToGraphDataList(udpSortedList);
-		DrawArchGraph(udpObj, udpNewGraphData, 300);
+		DrawArchGraph(udpObj, udpNewGraphData, 300, 1.0);
 	});
 }
 
@@ -324,7 +324,7 @@ function InitNetFlowAlertLog(alertDivSelector, interval, LogTabSelector){
 // netflow のグラフを描くコンポーネントを作ります。
 // コンポーネントを書き込む div 要素へのセレクタと、コンポーネントが使う id の名前空間(?)を指定します
 // 例: InitNetFlowGraphComponent("#tab1", "SflowGraph");
-function InitNetFlowGraphComponent(targetSelector, IDName) {
+function InitNetFlowGraphComponent(targetSelector, IDName, width, height) {
 	var interval = 2000;
 
 	var ID = "#" + IDName;
@@ -333,8 +333,8 @@ function InitNetFlowGraphComponent(targetSelector, IDName) {
 	// 左側を縦に分割
 	SeparateUpDown(ID + "_LEFT", IDName + "_LEFT_UP", IDName + "_LEFT_DOWN");
 	// tcpGraph, udpGraph の領域を作成
-	$(ID + "_LEFT_UP").html("<h2>TCP graph</h2><div id=\"" + IDName + "_TcpGraph\"></div>");
-	$(ID + "_LEFT_DOWN").html("<h2>UDP graph</h2><div id=\"" + IDName + "_UdpGraph\"></div>");
+	$(ID + "_LEFT_UP").html("<h4>SSL monitor: TCP</h4><div id=\"" + IDName + "_TcpGraph\"></div>");
+	$(ID + "_LEFT_DOWN").html("<h4>SSL monitor: UDP</h4><div id=\"" + IDName + "_UdpGraph\"></div>");
 	// 右側も縦に分割
 	SeparateUpDown(ID + "_RIGHT", IDName + "_RIGHT_UP", IDName + "_RIGHT_DOWN");
 
@@ -353,7 +353,7 @@ function InitNetFlowGraphComponent(targetSelector, IDName) {
 	// 右側の上は alert log 用に使います
 	var AlertLogTabSelector = ID + "_RIGHT_UP";
 	var AlertLogDivName = IDName + "_RIGHT_UP_ALERT_LOG";
-	$(AlertLogTabSelector).html('<h3>alert list</h3><div id="' + AlertLogDivName + '"></div>');
+	$(AlertLogTabSelector).html('<h4>SSL monitor: alert list</h4><div id="' + AlertLogDivName + '"></div>');
 	InitNetFlowAlertLog("#" + AlertLogDivName, interval, LogTabSelector);
 
 	// 定期更新を仕掛けます

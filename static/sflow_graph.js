@@ -1,9 +1,3 @@
-var width = 400;
-var height = 340;
-var outerRadius = Math.min(width, height) / 2 - 5;
-var innerRadius = outerRadius * 0.2;
-var duration = 2000;
-
 var originalDataList = [
 	{ "color": "#ff0000", "title": "ff0000", "count": 100, "textColor": "#000000" }
 	, { "color": "#00ff00", "title": "00ff00", "count": 200, "textColor": "#000000" }
@@ -351,111 +345,12 @@ function ConvertSortedListToGraphDataList(sortedList){
 
 var dataList = originalDataList.concat();
 
-// targetSelector に svg を追加してその中に width/height の大きさの円グラフを描くための箱を作って返します
-function CreateSVGArcGraphCanbas(targetSelector, width, height, clickEventHandler)
-{
-	var graphObj = {};
 
-	// 指定されたセレクタの中に <svg>...</svg> を作る
-	var svg = d3.select(targetSelector)
-		.append("svg")
-	// svg に width, height の attribute をつける
-	svg
-		.attr("width", width)
-		.attr("height", height)
-
-	// d3.layout.pie() で、sort せずに、値の ["percentage"] を値として使う関数を作る
-	var pie = d3.layout.pie().sort(null).value(function(d){return d["count"];});
-	// d3.svg.arc() で innerRadius, outerRadius を指定した関数を作る
-	var arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-
-	// 円弧になる path の style
-	var pathStyle = {
-		fill: function(d){return d.data["color"];}
-		, d: arc
-		, stroke: "white"
-	}
-
-	// 文字を表示するための text の style
-	var textStyle = {
-		"transform": function(d) {
-			d.innerRadius = innerRadius;
-			d.outerRadius = outerRadius;
-			return "translate(" + arc.centroid(d) + ")";
-		}
-		, "fill": function(d){return d.data['textColor'] }
-		, "text-anchor": "middle"
-	};
-
-	// 作った svg等 を graphObj に格納
-	graphObj.svg = svg;
-	//graphObj.svg_g = svg_g;
-	graphObj.pie = pie;
-	graphObj.arc = arc;
-	graphObj.pathStyle = pathStyle;
-	graphObj.textStyle = textStyle;
-	graphObj.clickEventHandler = clickEventHandler;
-	graphObj.width = width;
-	graphObj.height = height;
-
-	return graphObj;
+function SFlowTcpCount2Scale(tcpCount, duration){
+	return Count2Scale(tcpCount / duration, 10, 20);
 }
-// CreateSVGArcGraphCanbas で作った graphObj に、newDataList で指示される円グラフを描きます
-// duration が 0 より大きければ、指定された時間(ミリ秒)で新しい値まで遷移するようにします
-function DrawArchGraph(graphObj, newDataList, duration){
-	//console.log("draw", newDataList);
-
-	// svg.g.arc を作る準備をする
-	var dataInjectedArcGroup = graphObj.svg
-		.selectAll("g.arc")
-		.data(graphObj.pie(newDataList));
-
-	// 既存の円弧を書き換える
-	dataInjectedArcGroup
-		.select("path")
-		.transition()
-		.attr(graphObj.pathStyle)
-		.duration(duration)
-		;
-	dataInjectedArcGroup
-		.select("text")
-		.transition()
-		.attr(graphObj.textStyle)
-		.duration(duration)
-		.text(function(d){return d.data["title"];});
-
-	// 円弧一つづつ用の g を追加する
-	var appendedArcGroup = dataInjectedArcGroup
-		.enter()
-		.append("g")
-		.attr("class", "arc")
-		.attr("transform", "translate(" + graphObj.width / 2 + "," + graphObj.height / 2 + ")")
-		.on("click", function(d){if(graphObj.clickEventHandler){graphObj.clickEventHandler(d.data);}})
-		;
-
-	// 円弧を表示するための svg.g.path を作る
-	appendedArcGroup
-		.append("svg:path")
-		.transition()
-		.attr(graphObj.pathStyle)
-		.duration(duration)
-		;
-
-	// svg.g.text を作る
-	appendedArcGroup
-		.append("svg:text")
-		.transition()
-		.attr(graphObj.textStyle)
-		.duration(duration)
-		.text(function(d){return d.data["title"];});  
-
-	// svg.g.* のいらないものを削除
-	dataInjectedArcGroup
-		.exit()
-		.transition()
-		.attr("transform", "scale(0,0)")
-		.duration(duration)
-		.remove()
+function SFlowUdpCount2Scale(udpCount, duration){
+	return Count2Scale(udpCount / duration, 10, 35);
 }
 
 // データを読み込んで反映させます
@@ -467,6 +362,8 @@ function LoadNewData(tcpObj, udpObj){
 	}
 	GetJSON("/current_data.json?duration=" + duration, {}, function (sflowDataList){
 		var l4ProtoCount = splitL4Proto(sflowDataList);
+		var tcpCount = l4ProtoCount.tcp.length;
+		var udpCount = l4ProtoCount.udp.length;
 		var tcpCountMap = ProcessPacketDataToCountData(l4ProtoCount.tcp);
 		var udpCountMap = ProcessPacketDataToCountData(l4ProtoCount.udp);
 		var tcpSortedList = ConvertCountMapToSortedList(tcpCountMap);
@@ -483,10 +380,12 @@ function LoadNewData(tcpObj, udpObj){
 			udpSortedList.push(dropedPackets);
 		}
 		var tcpNewGraphData = ConvertSortedListToGraphDataList(tcpSortedList);
-		DrawArchGraph(tcpObj, tcpNewGraphData, 300);
+		//DrawArchGraph(tcpObj, tcpNewGraphData, 300, SFlowTcpCount2Scale(tcpCount, duration));
+		DrawArchGraph(tcpObj, tcpNewGraphData, 300, 1.0);
 
 		var udpNewGraphData = ConvertSortedListToGraphDataList(udpSortedList);
-		DrawArchGraph(udpObj, udpNewGraphData, 300);
+		//DrawArchGraph(udpObj, udpNewGraphData, 300, SFlowUdpCount2Scale(udpCount, duration));
+		DrawArchGraph(udpObj, udpNewGraphData, 300, 1.0);
 	});
 }
 
@@ -549,7 +448,7 @@ function InitSFlowAlertLog(alertDivSelector, interval, LogTabSelector){
 // sflow のグラフを描くコンポーネントを作ります。
 // コンポーネントを書き込む div 要素へのセレクタと、コンポーネントが使う id の名前空間(?)を指定します
 // 例: InitSFlowGraphComponent("#tab1", "SflowGraph");
-function InitSFlowGraphComponent(targetSelector, IDName) {
+function InitSFlowGraphComponent(targetSelector, IDName, width, height) {
 	var interval = 2000;
 
 	var ID = "#" + IDName;
@@ -558,8 +457,8 @@ function InitSFlowGraphComponent(targetSelector, IDName) {
 	// 左側を縦に分割
 	SeparateUpDown(ID + "_LEFT", IDName + "_LEFT_UP", IDName + "_LEFT_DOWN");
 	// tcpGraph, udpGraph の領域を作成
-	$(ID + "_LEFT_UP").html("<h2>TCP graph</h2><div id=\"" + IDName + "_TcpGraph\"></div>");
-	$(ID + "_LEFT_DOWN").html("<h2>UDP graph</h2><div id=\"" + IDName + "_UdpGraph\"></div>");
+	$(ID + "_LEFT_UP").html("<h4>DDoS monitor: TCP</h4><div id=\"" + IDName + "_TcpGraph\"></div>");
+	$(ID + "_LEFT_DOWN").html("<h4>DDoS monitor: UDP</h4><div id=\"" + IDName + "_UdpGraph\"></div>");
 	// 右側も縦に分割
 	SeparateUpDown(ID + "_RIGHT", IDName + "_RIGHT_UP", IDName + "_RIGHT_DOWN");
 
@@ -578,7 +477,7 @@ function InitSFlowGraphComponent(targetSelector, IDName) {
 	// 右側の上は alert log 用に使います
 	var AlertLogTabSelector = ID + "_RIGHT_UP";
 	var AlertLogDivName = IDName + "_RIGHT_UP_ALERT_LOG";
-	$(AlertLogTabSelector).html('<h3>alert list</h3><div id="' + AlertLogDivName + '"></div>');
+	$(AlertLogTabSelector).html('<h4>DDoS monitor alert list</h4><div id="' + AlertLogDivName + '"></div>');
 	InitSFlowAlertLog("#" + AlertLogDivName, interval, LogTabSelector);
 
 	// 初期状態を load します
