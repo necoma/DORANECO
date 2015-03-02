@@ -7,7 +7,7 @@ import (
 )
 
 type NetFlowData struct {
-	Time        time.Time  `json:"time"`
+	Time        jsonTime  `json:"time"`
 	Flow        string    `json:"flow"`
 }
 
@@ -41,7 +41,7 @@ func (buf NetFlowBuffer) AddFlowJsonString(data string) error {
 	if ( data == "" ) {
 		return fmt.Errorf("nil input")
 	}
-	flowData := &NetFlowData{time.Now(), data}
+	flowData := &NetFlowData{jsonTime{time.Now()}, data}
 
 	return buf.AddNetFlowData(flowData)
 }

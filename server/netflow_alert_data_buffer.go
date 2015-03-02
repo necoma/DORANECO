@@ -8,7 +8,7 @@ import (
 
 type NetFlowAlertData struct {
 	Port        int           `json:"port"`
-	Time        jsonTime     `json:"time"`
+	Time        jsonTime      `json:"time"`
 	Duration    time.Duration `json:"duration"`
 	Flow        string        `json:"flow"`
 }

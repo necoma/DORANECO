@@ -128,7 +128,7 @@ func GET_NetFlowAlertDataJson(res http.ResponseWriter, req *http.Request, alertB
 			strBuffer.WriteString(",")
 		}
 		strBuffer.WriteString(fmt.Sprintf("{\"port\":%v, \"duration\":%v, \"time\":\"%v\", \"flow\":%v}",
-			currentData.Port, currentData.Duration.Seconds(), currentData.Time, currentData.Flow))
+			currentData.Port, currentData.Duration.Seconds(), currentData.Time.format(), currentData.Flow))
 	}
 	fmt.Fprintf(res, "[%v]", strBuffer.String())
 }
