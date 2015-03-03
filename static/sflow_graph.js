@@ -102,20 +102,21 @@ function PacketSort_UniqedData(uniqedFlowDataList){
 
 // logの部分にタブを一個追加してタブのセレクタに使える ID を返します
 function AddLogTab(tabTitle, flowDataList, targetTabSelector){
+	var tagNameBase = targetTabSelector.replace("#", "");
 	var originalData = $(targetTabSelector).data();
 	var tabList = originalData.tabList;
 	if(tabList == null || !Array.isArray(tabList) ){
 		tabList = [];
 	}
-	var tabName = "log1";
+	var tabName = tagNameBase + "log1";
 	if(tabList.length > 0) {
 		var lastTabData = tabList[tabList.length - 1];
 		if("tabName" in lastTabData) {
 			var lastTabName = lastTabData.tabName;
-			var n = lastTabName.replace("log", "");
+			var n = lastTabName.replace(tagNameBase + "log", "");
 			var lastTabNumber = parseInt(n);
 			lastTabNumber++;
-			tabName = "log" + lastTabNumber;
+			tabName = tagNameBase + "log" + lastTabNumber;
 		}
 	}
 	var data = {tabName: tabName, data: flowDataList};
@@ -484,19 +485,6 @@ function InitSFlowGraphComponent(targetSelector, IDName, width, height) {
 	//LoadNewData(tcpObj, udpObj);
 	// 定期更新を仕掛けます
 	LoopLoadNewData(tcpObj, udpObj, interval);
-	/*
-	var prevRequestTime = new Date();
-	setInterval(function(){
-		// 長いこと表示されてないと setInterval が山ほど呼ばれるらしいので無視するようなのを入れます
-		var now = new Date();
-		var msec = now - prevRequestTime;
-		if(msec < interval){
-			return;
-		}
-		prevRequestTime = now;
-		LoadNewData(tcpObj, udpObj);
-	}, interval);
-	*/
 }
 
 
