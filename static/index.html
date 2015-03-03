@@ -159,7 +159,8 @@ uniq target: {{:uniqTarget}} port {{:port}}, count {{:flowList.length}}, {{:date
 		<!-- source port -->
 		{{if #data[0].L4Header}}
 			{{if #data[0].L4Header.Tcp}}
-				<td>{{:#data[0].L4Header.Tcp.SourcePort}}</td>
+				<!--td>{{:#data[0].L4Header.Tcp.SourcePort}}</td-->
+				<td>-</td>
 			{{else #data[0].L4Header.Udp}}
 				<td>{{:#data[0].L4Header.Udp.SourcePort}}</td>
 			{{else}}
@@ -168,7 +169,8 @@ uniq target: {{:uniqTarget}} port {{:port}}, count {{:flowList.length}}, {{:date
 		{{/if}}
 		<!-- dest IP -->
 		{{if #data[0].IPv4Header}}
-			<td>{{:#data[0].IPv4Header.Dst}}</td>
+			<!--td>{{:#data[0].IPv4Header.Dst}}</td-->
+			<td>-</td>
 		{{else #data[0].IPv6Header}}
 			<td>{{:#data[0].IPv6Header.Dst}}</td>
 		{{else}}
@@ -177,7 +179,8 @@ uniq target: {{:uniqTarget}} port {{:port}}, count {{:flowList.length}}, {{:date
 		<!-- destination port -->
 		{{if #data[0].L4Header}}
 			{{if #data[0].L4Header.Tcp}}
-				<td>{{:#data[0].L4Header.Tcp.DestinationPort}}</td>
+				<!--td>{{:#data[0].L4Header.Tcp.DestinationPort}}</td-->
+				<td>-</td>
 			{{else #data[0].L4Header.Udp}}
 				<td>{{:#data[0].L4Header.Udp.DestinationPort}}</td>
 			{{else}}
