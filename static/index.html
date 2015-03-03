@@ -169,8 +169,11 @@ uniq target: {{:uniqTarget}} port {{:port}}, count {{:flowList.length}}, {{:date
 		{{/if}}
 		<!-- dest IP -->
 		{{if #data[0].IPv4Header}}
-			<!--td>{{:#data[0].IPv4Header.Dst}}</td-->
-			<td>-</td>
+			{{if #data[0].L4Header.Tcp}}
+				<td>-</td>
+			{{else #data[0].L4Header.Udp}}
+				<td>{{:#data[0].IPv4Header.Dst}}</td>
+			{{/if}}
 		{{else #data[0].IPv6Header}}
 			<td>{{:#data[0].IPv6Header.Dst}}</td>
 		{{else}}
