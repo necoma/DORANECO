@@ -5,6 +5,10 @@ html, body {
 	padding: 1;
 }
 
+table {
+	font-size: xx-small;
+}
+
 #PoweredByNECOMA {
 	position: fixed;
 	top: 4px;
