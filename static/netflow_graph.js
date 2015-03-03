@@ -234,6 +234,7 @@ function NetFlowProcessPacketDataToCountData(packetDataList){
 
 // データを読み込んで反映させます
 function NetFlowLoadNewData(tcpObj, udpObj){
+	var topNum = 10;
 	var duration = 10;
 	var argDuration = Math.floor(location.href.split("?")[1]);
 	if (argDuration > 0) {
@@ -246,14 +247,14 @@ function NetFlowLoadNewData(tcpObj, udpObj){
 		var tcpSortedList = ConvertCountMapToSortedList(tcpCountMap);
 		var udpSortedList = ConvertCountMapToSortedList(udpCountMap);
 			
-		if (tcpSortedList.length > 20) {
-			var dropedPackets = ConcatCountMapList(tcpSortedList.slice(20));
-			tcpSortedList = tcpSortedList.slice(0, 20);
+		if (tcpSortedList.length > topNum) {
+			var dropedPackets = ConcatCountMapList(tcpSortedList.slice(topNum));
+			tcpSortedList = tcpSortedList.slice(0, topNum);
 			tcpSortedList.push(dropedPackets);
 		}
-		if (udpSortedList.length > 20) {
-			var dropedPackets = ConcatCountMapList(udpSortedList.slice(20));
-			udpSortedList = udpSortedList.slice(0, 20);
+		if (udpSortedList.length > topNum) {
+			var dropedPackets = ConcatCountMapList(udpSortedList.slice(topNum));
+			udpSortedList = udpSortedList.slice(0, topNum);
 			udpSortedList.push(dropedPackets);
 		}
 		var tcpNewGraphData = ConvertSortedListToGraphDataList(tcpSortedList);
