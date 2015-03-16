@@ -7,38 +7,45 @@ import (
 	"container/list"
 )
 
+// SrcDstCountData は、
+// source と destination のポート番号でまとめたパケットの数を保持します
 type SrcDstCountData struct {
 	SourceCount      map[string]int  `json:"Source"`
 	DestinationCount map[string]int  `json:"Destination"`
 }
 
+// L4CountData は、Layer4 のそれぞれのプロトコル毎に SrcDstCountData を保持します
 type L4CountData struct {
-	Tcp   SrcDstCountData  `json:"tcp"`
-	Udp   SrcDstCountData  `json:"udp"`
-	Icmp  SrcDstCountData  `json:"icmp"`
+	TCP   SrcDstCountData  `json:"tcp"`
+	UDP   SrcDstCountData  `json:"udp"`
+	ICMP  SrcDstCountData  `json:"icmp"`
 }
 
+// L3HeaderWithTime は Etherフレーム とそのフレームが観測された時間を保持します
 type L3HeaderWithTime struct {
 	time     time.Time
 	l3Header *FlowEthernetISO8023
 }
 
+// CountDataBuffer は指定された最大長までの L4CountData を保持します
 type CountDataBuffer struct {
 	MaxLength     int
 	CountDataList *list.List
 }
 
+// L3HeaderBuffer は指定された最大長までの L3HeaderWithTime を保持します
 type L3HeaderBuffer struct {
 	MaxLength    int
 	L3HeaderList *list.List
 }
 
-//
+// MakeL3HeaderBuffer は最大長の指定された L3HeaderBuffer を生成します
 func MakeL3HeaderBuffer(maxLength int) *L3HeaderBuffer{
 	return &L3HeaderBuffer{ MaxLength: maxLength,
 		L3HeaderList: list.New() }
 }
 
+// AddL3HeaderWithTime は、L3HeaderBuffer に L3HeaderWithTime を追加します
 // L3HeaderWithTime を追加します
 func (buf L3HeaderBuffer) AddL3HeaderWithTime(data *L3HeaderWithTime) error {
 	if ( data == nil ) {
@@ -54,6 +61,7 @@ func (buf L3HeaderBuffer) AddL3HeaderWithTime(data *L3HeaderWithTime) error {
 	return nil
 }
 
+// AddL3Header は L3HeaderBuffer に Etherフレーム を追加します
 // L3HeaderBuffer に L3Header(FlowEthernetISO8023) を追加します。現在の時間を付加情報として埋め込みます
 func (buf L3HeaderBuffer) AddL3Header(data *FlowEthernetISO8023) error {
 	if ( data == nil ) {
@@ -65,6 +73,7 @@ func (buf L3HeaderBuffer) AddL3Header(data *FlowEthernetISO8023) error {
 }
 
 
+// GetDataFromTime は
 // CountDataBuffer から指定された時間以降のデータを取り出します。
 // データが無ければ長さ 0 のスライスを返します
 func (buf L3HeaderBuffer) GetDataFromTime(beforeTime time.Time) ([]*FlowEthernetISO8023, error) {
@@ -82,39 +91,4 @@ func (buf L3HeaderBuffer) GetDataFromTime(beforeTime time.Time) ([]*FlowEthernet
 	}
 	return retBuf, nil
 }
-
-/*
-// []*L4Header を受け取り、中にあるもののポート番号で sort uniq -c した値を返します
-func CalcPortCount(l4HeaderArray []*L4Header) (*SrcDstCountData, error) {
-	srcPortMap := map[uint16]int{}
-	dstPortMap := map[uint16]int{}
-
-	i := 0
-	for i = 0; i < len(l4HeaderArray); i++ {
-		l4Header := l4HeaderArray[i]
-		if ( l4Header.Tcp != nil ) {
-			srcPortMap[l4Header.Tcp.SourcePort]++
-			dstPortMap[l4Header.Tcp.DestinationPort]++
-		}else if ( l4Header.Udp != nil ) {
-			srcPortMap[l4Header.Udp.SourcePort]++
-			dstPortMap[l4Header.Udp.DestinationPort]++
-		}
-	}
-
-	countData := &SrcDstCountData{}
-
-	countData.SourceCount = map[string]int{}
-	countData.DestinationCount = map[string]int{}
-
-	for port, count := range srcPortMap {
-		countData.SourceCount[strconv.Itoa(int(port))] += count
-	}
-	for port, count := range dstPortMap {
-		countData.DestinationCount[strconv.Itoa(int(port))] += count
-	}
-
-	return countData, nil
-}
-*/
-
 

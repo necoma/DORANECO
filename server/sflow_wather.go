@@ -7,11 +7,11 @@ import (
 )
 
 // UDP パケットだけを取り出します
-func FilterPacket_UDP(packetList []*FlowEthernetISO8023) ([]*FlowEthernetISO8023) {
+func filterPacketUDP(packetList []*FlowEthernetISO8023) ([]*FlowEthernetISO8023) {
 	result := []*FlowEthernetISO8023{}
 	for i := 0; i < len(packetList); i++ {
 		packet := packetList[i]
-		if packet.L4Header == nil || packet.L4Header.Udp == nil {
+		if packet.L4Header == nil || packet.L4Header.UDP == nil {
 			continue
 		}
 		result = append(result, packet)
@@ -20,33 +20,33 @@ func FilterPacket_UDP(packetList []*FlowEthernetISO8023) ([]*FlowEthernetISO8023
 }
 
 // 同じポート番号でパケットを集めます
-type PacketPortMap map[uint16][]*FlowEthernetISO8023
+type packetPortMap map[uint16][]*FlowEthernetISO8023
 
 // 同じポート番号にパケットを集めて map にして返します
-func CountPort(packetArray []*FlowEthernetISO8023) PacketPortMap {
-	counter := PacketPortMap{}
+func countPort(packetArray []*FlowEthernetISO8023) packetPortMap {
+	counter := packetPortMap{}
 	for i := 0; i < len(packetArray); i++ {
 		packet := packetArray[i]
 		if packet.L4Header == nil {
 			continue
 		}
-		if packet.L4Header.Tcp != nil {
-			counter[packet.L4Header.Tcp.SourcePort] =
-				append(counter[packet.L4Header.Tcp.SourcePort], packet)
-			counter[packet.L4Header.Tcp.DestinationPort] =
-				append(counter[packet.L4Header.Tcp.DestinationPort], packet)
+		if packet.L4Header.TCP != nil {
+			counter[packet.L4Header.TCP.SourcePort] =
+				append(counter[packet.L4Header.TCP.SourcePort], packet)
+			counter[packet.L4Header.TCP.DestinationPort] =
+				append(counter[packet.L4Header.TCP.DestinationPort], packet)
 		}
-		if packet.L4Header.Udp != nil {
-			counter[packet.L4Header.Udp.SourcePort] =
-				append(counter[packet.L4Header.Udp.SourcePort], packet)
-			counter[packet.L4Header.Udp.DestinationPort] =
-				append(counter[packet.L4Header.Udp.DestinationPort], packet)
+		if packet.L4Header.UDP != nil {
+			counter[packet.L4Header.UDP.SourcePort] =
+				append(counter[packet.L4Header.UDP.SourcePort], packet)
+			counter[packet.L4Header.UDP.DestinationPort] =
+				append(counter[packet.L4Header.UDP.DestinationPort], packet)
 		}
 	}
 	return counter
 }
 
-func CalcMaxCountPort(counter PacketPortMap) (uint16, []*FlowEthernetISO8023) {
+func calcMaxCountPort(counter packetPortMap) (uint16, []*FlowEthernetISO8023) {
 	var maxPort uint16
 	var maxPacketList []*FlowEthernetISO8023
 	maxPort = 0
@@ -59,6 +59,7 @@ func CalcMaxCountPort(counter PacketPortMap) (uint16, []*FlowEthernetISO8023) {
 	return maxPort, maxPacketList
 }
 
+// PortWatcher は sflow のフィードを受けてデータを溜め込みます
 func PortWatcher(stopChannel chan bool,
 	durationSecond int,
 	watchPortList []int,
@@ -78,13 +79,13 @@ func PortWatcher(stopChannel chan bool,
 			log.Println("l3HeaderBuffer.GetDataFromTime() failed.")
 			continue
 		}
-		udpPacketArray := FilterPacket_UDP(packetList)
+		udpPacketArray := filterPacketUDP(packetList)
 		if ( len(udpPacketArray) <= 10 ) { // パケットが10個以下なら何もしないことにします
 			continue
 		}
 
-		portCount := CountPort(udpPacketArray)
-		maxPort, maxPacketList := CalcMaxCountPort(portCount)
+		portCount := countPort(udpPacketArray)
+		maxPort, maxPacketList := calcMaxCountPort(portCount)
 
 		hit := false
 		maxPortInt := int(maxPort)
@@ -102,11 +103,11 @@ func PortWatcher(stopChannel chan bool,
 			}
 		}
 		if hit {
-			err := Mew(fmt.Sprintf("port: %d is max count now. count: %d", maxPort, len(maxPacketList)), mewUserData)
+			mewResult, err := Mew(fmt.Sprintf("port: %d is max count now. count: %d", maxPort, len(maxPacketList)), mewUserData)
 			if err != nil {
 				fmt.Println("mew error: ", err)
 			}
-			alertBuffer.AddPacketList(maxPort, maxPacketList)
+			alertBuffer.AddPacketList(maxPort, maxPacketList, mewResult)
 		}
 	}
 }

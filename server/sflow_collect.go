@@ -64,6 +64,7 @@ func listenSflow(addrAndPort string, datagramChannel chan *sflow.Datagram, close
 	}
 }
 
+// L4HeaderTCP は sflow で得られた TCP のヘッダです
 // json にする時に残すものだけを頭文字を大文字にしています
 type L4HeaderTCP struct {
 	SourcePort       uint16
@@ -89,6 +90,7 @@ func (f L4HeaderTCP) String() string {
 		"")
 }
 
+// L4HeaderUDP は、sflow で得られた UDP のヘッダです
 // json にする時に残すものだけを頭文字を大文字にしています
 type L4HeaderUDP struct {
 	SourcePort      uint16
@@ -106,6 +108,7 @@ func (f L4HeaderUDP) String() string {
 		"")
 }
 
+// L4HeaderICMP は sflow で得られた ICMP のヘッダです
 type L4HeaderICMP struct {
 	Type     uint8
 	Code     uint8
@@ -120,20 +123,22 @@ func (f L4HeaderICMP) String() string {
 		"")
 }
 
+// L4Header は sflow で得られた Layer4 ヘッダを保持します
 type L4Header struct {
-	Tcp  *L4HeaderTCP
-	Udp  *L4HeaderUDP
-	Icmp *L4HeaderICMP
+	TCP  *L4HeaderTCP
+	UDP  *L4HeaderUDP
+	ICMP *L4HeaderICMP
 }
 
 func (f L4Header) String() string {
 	return fmt.Sprint(
-		"TCP: ", f.Tcp,
-		", UDP: ", f.Udp,
-		", ICMP: ", f.Icmp,
+		"TCP: ", f.TCP,
+		", UDP: ", f.UDP,
+		", ICMP: ", f.ICMP,
 		"")
 }
 
+// FlowEthernetISO8023 は、sflow で得られた Etherフレーム を保持します
 type FlowEthernetISO8023 struct {
 	destinationMacAddress [6]byte
 	sourceMacAddress [6]byte
@@ -269,17 +274,17 @@ func parseL4Header(buf []byte, protocol int) (*L4Header, error) {
 
 	switch protocol {
 	case 1: // ICMP
-		f.Icmp, err = parseL4HeaderICMP(buf)
+		f.ICMP, err = parseL4HeaderICMP(buf)
 		if err != nil {
 			return nil, err
 		}
 	case 6: // TCP
-		f.Tcp, err = parseL4HeaderTCP(buf)
+		f.TCP, err = parseL4HeaderTCP(buf)
 		if err != nil {
 			return nil, err
 		}
 	case 17: // UDP
-		f.Udp, err = parseL4HeaderUDP(buf)
+		f.UDP, err = parseL4HeaderUDP(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -304,13 +309,13 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 		return f, err
 	}
 
-	var type_len uint16
-	err = binary.Read(reader, binary.BigEndian, &type_len)
+	var typeLen uint16
+	err = binary.Read(reader, binary.BigEndian, &typeLen)
 	if err != nil {
 		return f, err
 	}
 
-	if (type_len == 0x8100) {
+	if (typeLen == 0x8100) {
 		var vlanData uint16
 		err := binary.Read(reader, binary.BigEndian, &vlanData)
 		if err != nil {
@@ -319,8 +324,8 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 		f.vlanID = vlanData & 0x0fff;
 		f.vlanPriority = (uint8)(vlanData >> 13);
 
-		// vlan を読んだら type_len をもう一回読む必要があるっぽい
-		err = binary.Read(reader, binary.BigEndian, &type_len)
+		// vlan を読んだら typeLen をもう一回読む必要があるっぽい
+		err = binary.Read(reader, binary.BigEndian, &typeLen)
 		if err != nil {
 			return f, err
 		}
@@ -330,7 +335,7 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 	}
 
 	// 802.3+802.2 かどうかを観ないと駄目っぽい
-	if (type_len < 1500) { // 1500 = NFT_MAX_8023_LEN
+	if (typeLen < 1500) { // 1500 = NFT_MAX_8023_LEN
 		var tmpData [3]byte
 		err = binary.Read(reader, binary.BigEndian, &tmpData)
 		if err != nil {
@@ -348,8 +353,8 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 			    tmpData[2] != 0x00 ) {
 				return f, fmt.Errorf("invalid header for 802.3+802.2")
 			}
-			// もう一回 type_len を読みます	
-			err = binary.Read(reader, binary.BigEndian, &type_len)
+			// もう一回 typeLen を読みます	
+			err = binary.Read(reader, binary.BigEndian, &typeLen)
 			if err != nil {
 				return f, err
 			}
@@ -363,14 +368,14 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 		    	tmpData[1] == 0x06 &&
 		    	(tmpData[2] & 0x01) != 0x0 ) {
 				// IP over 8022
-				type_len = 0x0800
+				typeLen = 0x0800
 			}else{
 				return f, nil
 			}
 		}
 	}
 
-	if (type_len == 0x0800) {
+	if (typeLen == 0x0800) {
 		// IPv4
 		buf := make([]byte, reader.Len())
 		err := binary.Read(reader, binary.BigEndian, &buf)
@@ -389,7 +394,7 @@ func processRawPacketFlowEthernetISO8023(rawPacketFlow sflow.RawPacketFlow) (Flo
 			}
 		}
 	}
-	if (type_len == 0x86DD) {
+	if (typeLen == 0x86DD) {
 		// IPv6
 		buf := make([]byte, reader.Len())
 		err := binary.Read(reader, binary.BigEndian, &buf)
@@ -493,7 +498,7 @@ func startSflowCollector(addrAndPort string, headerBuffer *L3HeaderBuffer) error
 		//fmt.Println("sflow packet got: ip: ", datagram.IpAddress, " subAgentID ", datagram.SubAgentId);
 		i := 0
 		for _, sample := range datagram.Samples {
-			i += 1
+			i++
 			switch sample.SampleType() {
 			case sflow.TypeFlowSample:
 				//log.Println("Flow Sample", i)

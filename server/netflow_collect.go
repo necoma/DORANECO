@@ -12,8 +12,11 @@ import (
 	//"encoding/binary"
 )
 
+// NetFlowTemplateMap は NetFlow の template を保持するものです。
+// key となる値が何であるかの情報を常に更新し続けます。
 type NetFlowTemplateMap map[int]nf9packet.TemplateRecord
 
+// listenNetFlow は
 // sflow を addrAndPort で待ち受けます。取得した datagram を ch に書き込みます
 func listenNetFlow(addrAndPort string, packetChannel chan *nf9packet.Packet, closeChannel chan error) {
 	mtu := 10000
@@ -51,22 +54,24 @@ func listenNetFlow(addrAndPort string, packetChannel chan *nf9packet.Packet, clo
 	}
 }
 
-func (this *NetFlowTemplateMap) UpdateTemplate(flowSet *nf9packet.TemplateFlowSet) {
+// UpdateTemplate は NetFlowTemplateMap の　template を更新します
+func (templateMap *NetFlowTemplateMap) UpdateTemplate(flowSet *nf9packet.TemplateFlowSet) {
 	for _, record := range flowSet.Records {
-		(*this)[int(record.TemplateId)] = record
+		(*templateMap)[int(record.TemplateId)] = record
 	}
 }
 
-/// flowSet を TemplateMap にある情報から JSON でそのまま使えるような文字列に変換します。
-func (this *NetFlowTemplateMap) ConvertFlowSetToJson(flowSet *nf9packet.DataFlowSet) (string, error) {
+// ConvertFlowSetToJSON は
+// flowSet を TemplateMap にある情報から JSON でそのまま使えるような文字列に変換します。
+func (templateMap *NetFlowTemplateMap) ConvertFlowSetToJSON(flowSet *nf9packet.DataFlowSet) (string, error) {
 	var retBuffer bytes.Buffer
 
-	if this == nil || flowSet == nil {
-		return "", fmt.Errorf("nil input.")
+	if templateMap == nil || flowSet == nil {
+		return "", fmt.Errorf("nil input")
 	}
-	template, ok := (*this)[int(flowSet.Id)]
+	template, ok := (*templateMap)[int(flowSet.Id)]
 	if !ok {
-		return "", fmt.Errorf("template id %v not defined now.", flowSet.Id)
+		return "", fmt.Errorf("template id %v not defined now", flowSet.Id)
 	}
 	buffer := bytes.NewBuffer(flowSet.Data)
 	
@@ -93,21 +98,22 @@ func (this *NetFlowTemplateMap) ConvertFlowSetToJson(flowSet *nf9packet.DataFlow
 	return fmt.Sprintf("{%v}", retBuffer.String()), nil
 }
 
+// checkAlertData は
 /// flowSet が alert を上げるべきデータであるかどうかを判定して、必要なら alertBuffer に追加します
-func (this *NetFlowTemplateMap) checkAlertData(flowSet *nf9packet.DataFlowSet, alertTargetMap *NetFlowAlertTargetMap, alertBuffer *NetFlowAlertBuffer, jsonString string) error {
-	if this == nil || flowSet == nil {
+func (templateMap *NetFlowTemplateMap) checkAlertData(flowSet *nf9packet.DataFlowSet, alertTargetMap *NetFlowAlertTargetMap, alertBuffer *NetFlowAlertBuffer, jsonString string) error {
+	if templateMap == nil || flowSet == nil {
 		return fmt.Errorf("nil input")
 	}
-	template, ok := (*this)[int(flowSet.Id)]
+	template, ok := (*templateMap)[int(flowSet.Id)]
 	if !ok {
-		return fmt.Errorf("template id %v not defined now.", flowSet.Id)
+		return fmt.Errorf("template id %v not defined now", flowSet.Id)
 	}
 	buffer := bytes.NewBuffer(flowSet.Data)
 
 	srcPort := ""
 	dstPort := ""
-	var first_switched time.Duration
-	var last_switched time.Duration
+	var firstSwitched time.Duration
+	var lastSwitched time.Duration
 	for _, field := range template.Fields {
 		if buffer.Len() < int(field.Length) {
 			break
@@ -120,14 +126,14 @@ func (this *NetFlowTemplateMap) checkAlertData(flowSet *nf9packet.DataFlowSet, a
 			dstPort = field.DataToString(currentBuffer)
 		}
 		if field.Name() == "FIRST_SWITCHED" {
-			first_switched = time.Duration(fieldToUInteger(currentBuffer)) * time.Millisecond
+			firstSwitched = time.Duration(fieldToUInteger(currentBuffer)) * time.Millisecond
 		}
 		if field.Name() == "LAST_SWITCHED" {
-			last_switched = time.Duration(fieldToUInteger(currentBuffer)) * time.Millisecond
+			lastSwitched = time.Duration(fieldToUInteger(currentBuffer)) * time.Millisecond
 		}
 	}
 
-	duration := last_switched - first_switched
+	duration := lastSwitched - firstSwitched
 	if duration <= 0 {
 		return nil
 	}
@@ -154,6 +160,7 @@ func (this *NetFlowTemplateMap) checkAlertData(flowSet *nf9packet.DataFlowSet, a
 	return nil
 }
 
+// startNetFlowCollector は、NetFlowCollector の動作を開始する点です
 func startNetFlowCollector(addrAndPort string, netFlowBuffer *NetFlowBuffer, netFlowAlertBuffer *NetFlowAlertBuffer, netFlowAlertTargetMap *NetFlowAlertTargetMap) error {
 	packetChannel := make(chan *nf9packet.Packet)
 	listenStopChannel := make(chan error)
@@ -175,11 +182,11 @@ func startNetFlowCollector(addrAndPort string, netFlowBuffer *NetFlowBuffer, net
 				templateMap.UpdateTemplate(&set)
 				break
 			case nf9packet.DataFlowSet:
-				jsonString, err := templateMap.ConvertFlowSetToJson(&set)
+				jsonString, err := templateMap.ConvertFlowSetToJSON(&set)
 				if err != nil {
 					break
 				}
-				netFlowBuffer.AddFlowJsonString(jsonString)
+				netFlowBuffer.AddFlowJSONString(jsonString)
 				templateMap.checkAlertData(&set, netFlowAlertTargetMap, netFlowAlertBuffer, jsonString)
 				break
 			case nf9packet.OptionsTemplateFlowSet:

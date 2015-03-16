@@ -19,7 +19,7 @@ func htons(n int) int {
 	return int(int16(byte(n))<<8 | int16(byte(n>>8)))
 }
 
-func GET_CurrentSFlowDataJson(res http.ResponseWriter, req *http.Request, l4HeaderBuffer *L3HeaderBuffer) {
+func getCurrentSFlowDataJSON(res http.ResponseWriter, req *http.Request, l4HeaderBuffer *L3HeaderBuffer) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if l4HeaderBuffer == nil {
@@ -47,7 +47,7 @@ func GET_CurrentSFlowDataJson(res http.ResponseWriter, req *http.Request, l4Head
 	res.Write(js)
 }
 
-func GET_AlertDataJson(res http.ResponseWriter, req *http.Request, alertBuffer *AlertBuffer) {
+func getAlertDataJSON(res http.ResponseWriter, req *http.Request, alertBuffer *AlertBuffer) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if alertBuffer == nil {
 		fmt.Fprintf(res, "%s", `{"result": "error", "description": "alert data is not anavailable."}`)
@@ -73,7 +73,7 @@ func GET_AlertDataJson(res http.ResponseWriter, req *http.Request, alertBuffer *
 	res.Write(js)
 }
 
-func GET_CurrentFlowDataJson(res http.ResponseWriter, req *http.Request, netFlowBuffer *NetFlowBuffer) {
+func getCurrentFlowDataJSON(res http.ResponseWriter, req *http.Request, netFlowBuffer *NetFlowBuffer) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if netFlowBuffer == nil {
@@ -103,7 +103,7 @@ func GET_CurrentFlowDataJson(res http.ResponseWriter, req *http.Request, netFlow
 	fmt.Fprintf(res, "[%v]", strBuffer.String())
 }
 
-func GET_NetFlowAlertDataJson(res http.ResponseWriter, req *http.Request, alertBuffer *NetFlowAlertBuffer) {
+func getNetFlowAlertDataJSON(res http.ResponseWriter, req *http.Request, alertBuffer *NetFlowAlertBuffer) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if alertBuffer == nil {
 		fmt.Fprintf(res, "%s", `{"result": "error", "description": "alert data is not anavailable."}`)
@@ -133,20 +133,20 @@ func GET_NetFlowAlertDataJson(res http.ResponseWriter, req *http.Request, alertB
 	fmt.Fprintf(res, "[%v]", strBuffer.String())
 }
 
-func martini_main(listen string, l4HeaderBuffer *L3HeaderBuffer, alertBuffer *AlertBuffer, netFlowBuffer *NetFlowBuffer, netFlowAlertBuffer *NetFlowAlertBuffer, authUser string, authPassword string) {
+func martiniMain(listen string, l4HeaderBuffer *L3HeaderBuffer, alertBuffer *AlertBuffer, netFlowBuffer *NetFlowBuffer, netFlowAlertBuffer *NetFlowAlertBuffer, authUser string, authPassword string) {
 	m := martini.Classic()
 	m.Use(martini.Static("static"))
 	m.Get("/current_data.json", func(res http.ResponseWriter, req *http.Request) {
-		GET_CurrentSFlowDataJson(res, req, l4HeaderBuffer)
+		getCurrentSFlowDataJSON(res, req, l4HeaderBuffer)
 	})
 	m.Get("/alert_data.json", func(res http.ResponseWriter, req *http.Request) {
-		GET_AlertDataJson(res, req, alertBuffer)
+		getAlertDataJSON(res, req, alertBuffer)
 	})
 	m.Get("/netflow_current_data.json", func(res http.ResponseWriter, req *http.Request) {
-		GET_CurrentFlowDataJson(res, req, netFlowBuffer)
+		getCurrentFlowDataJSON(res, req, netFlowBuffer)
 	})
 	m.Get("/netflow_alert_data.json", func(res http.ResponseWriter, req *http.Request) {
-		GET_NetFlowAlertDataJson(res, req, netFlowAlertBuffer)
+		getNetFlowAlertDataJSON(res, req, netFlowAlertBuffer)
 	})
 	m.Get("/", func() string {
 		return "Hello world!"
@@ -155,7 +155,7 @@ func martini_main(listen string, l4HeaderBuffer *L3HeaderBuffer, alertBuffer *Al
 	m.RunOnAddr(listen)
 }
 
-func SwitchUser(uid int, gid int){
+func switchUser(uid int, gid int){
 	if syscall.Getuid() == 0 {
 		syscall.Setgid(gid)
 		syscall.Setuid(uid)
@@ -178,14 +178,14 @@ func main(){
 	netFlowBuffer := MakeNetFlowBuffer(watcherConfig.NetFlowListener.MaxPacketCount)
 	netFlowAlertBuffer := MakeNetFlowAlertBuffer(watcherConfig.NetFlowListener.MaxAlertCount)
 
-	go martini_main(watcherConfig.HttpServer.Listen,
+	go martiniMain(watcherConfig.HTTPServer.Listen,
 		l3HeaderBuffer,
 		alertBuffer,
 		netFlowBuffer,
 		netFlowAlertBuffer,
-		watcherConfig.HttpServer.BasicAuthUser,
-		watcherConfig.HttpServer.BasicAuthPassword)
-	SwitchUser(watcherConfig.RunningUserId, watcherConfig.RunningGroupId)
+		watcherConfig.HTTPServer.BasicAuthUser,
+		watcherConfig.HTTPServer.BasicAuthPassword)
+	switchUser(watcherConfig.RunningUserID, watcherConfig.RunningGroupID)
 	
 	stopChannel := make(chan bool)
 	go PortWatcher(stopChannel,

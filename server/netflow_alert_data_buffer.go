@@ -6,6 +6,7 @@ import (
 	"container/list"
 )
 
+// NetFlowAlertData は、NetFlowのAlertを保持します
 type NetFlowAlertData struct {
 	Port        int           `json:"port"`
 	Time        jsonTime      `json:"time"`
@@ -13,17 +14,19 @@ type NetFlowAlertData struct {
 	Flow        string        `json:"flow"`
 }
 
+// NetFlowAlertBuffer は NetFlowAlertData を MaxLength の数まで保持するための保管庫です
 type NetFlowAlertBuffer struct {
 	MaxLength    int
 	AlertList    *list.List
 }
 
+// MakeNetFlowAlertBuffer は最大長を指定して NetFlowAlertBuffer を作成します
 func MakeNetFlowAlertBuffer(maxLength int) *NetFlowAlertBuffer{
 	return &NetFlowAlertBuffer{ MaxLength: maxLength,
 		AlertList: list.New() }
 }
 
-// NetFlowAlertData を追加します
+// AddAlertData は NetFlowAlertData を追加します
 func (buf NetFlowAlertBuffer) AddAlertData(data *NetFlowAlertData) error {
 	if ( data == nil ) {
 		return fmt.Errorf("nil input")
@@ -38,7 +41,7 @@ func (buf NetFlowAlertBuffer) AddAlertData(data *NetFlowAlertData) error {
 	return nil
 }
 
-// NetFlowAlertBuffer に Flow を追加します。現在の時間を付加情報として埋め込みます
+// AddAlert は NetFlowAlertBuffer に Flow を追加します。現在の時間を付加情報として埋め込みます
 func (buf NetFlowAlertBuffer) AddAlert(port int, duration time.Duration, flow string) error {
 	if ( flow == "" ) {
 		return fmt.Errorf("nil input")
@@ -49,6 +52,7 @@ func (buf NetFlowAlertBuffer) AddAlert(port int, duration time.Duration, flow st
 }
 
 
+// GetDataFromTime は
 // AlertBuffer から指定された時間以降のデータを取り出します。
 // データが無ければ長さ 0 のスライスを返します
 func (buf NetFlowAlertBuffer) GetDataFromTime(beforeTime time.Time) ([]*NetFlowAlertData, error) {

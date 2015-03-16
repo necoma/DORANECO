@@ -97,9 +97,9 @@ var fieldDb = map[uint16]fieldDbEntry{
 79:  fieldDbEntry{"MPLS_LABEL_10", 3, fieldToStringMPLSLabel, "MPLS label at position 10 in the stack."},
 80:  fieldDbEntry{"IN_DST_MAC",    6, fieldToStringMAC, "Incoming destination MAC address."},
 81:  fieldDbEntry{"OUT_SRC_MAC",   6, fieldToStringMAC, "Outgoing source MAC address."},
-82:  fieldDbEntry{"IF_NAME",      -1, fieldToStringAscii, "Shortened interface name i.e.: \"FE1/0\"."},
-83:  fieldDbEntry{"IF_DESC",      -1, fieldToStringAscii, "Full interface name i.e.: \"FastEthernet 1/0\"."},
-84:  fieldDbEntry{"SAMPLER_NAME", -1, fieldToStringAscii, "Name of the flow sampler."},
+82:  fieldDbEntry{"IF_NAME",      -1, fieldToStringASCII, "Shortened interface name i.e.: \"FE1/0\"."},
+83:  fieldDbEntry{"IF_DESC",      -1, fieldToStringASCII, "Full interface name i.e.: \"FastEthernet 1/0\"."},
+84:  fieldDbEntry{"SAMPLER_NAME", -1, fieldToStringASCII, "Name of the flow sampler."},
 85:  fieldDbEntry{"IN_PERMANENT_BYTES",     -1, fieldToStringUInteger, "Running byte counter for a permanent flow. By default N is 4."},
 86:  fieldDbEntry{"IN_PERMANENT_PKTS",      -1, fieldToStringUInteger, "Running packet counter for a permanent flow. By default N is 4."},
 87:  fieldDbEntry{"VENDOR_PROPRIETARY_87",  -1, fieldToStringHex, "*Vendor Proprietary*"},
@@ -109,13 +109,13 @@ var fieldDb = map[uint16]fieldDbEntry{
 91:  fieldDbEntry{"MPLS_PREFIX_LEN",         1, fieldToStringUInteger, "Number of consecutive bits in the MPLS prefix length."},
 92:  fieldDbEntry{"SRC_TRAFFIC_INDEX",       4, fieldToStringUInteger, "BGP Policy Accounting Source Traffic Index."},
 93:  fieldDbEntry{"DST_TRAFFIC_INDEX",       4, fieldToStringUInteger, "BGP Policy Accounting Destination Traffic Index."},
-94:  fieldDbEntry{"APPLICATION_DESCRIPTION",-1, fieldToStringAscii, "Application description."},
+94:  fieldDbEntry{"APPLICATION_DESCRIPTION",-1, fieldToStringASCII, "Application description."},
 95:  fieldDbEntry{"APPLICATION_TAG",        -1, fieldToStringHex, "8 bits of engine ID, followed by n bits of classification."},
-96:  fieldDbEntry{"APPLICATION_NAME",       -1, fieldToStringAscii, "Name associated with a classification."},
+96:  fieldDbEntry{"APPLICATION_NAME",       -1, fieldToStringASCII, "Name associated with a classification."},
 }
 
 func fieldToUInteger(data []byte) (num uint64) {
-	for i := 0; i < len(data) && i < 8; i += 1 {
+	for i := 0; i < len(data) && i < 8; i++ {
 		num = (num << 8) | uint64(data[i])
 	}
 	return num
@@ -134,7 +134,7 @@ func fieldToStringHex(data []byte) string {
 	return "\"0x" + hex.EncodeToString(data) + "\""
 }
 
-func fieldToStringAscii(data []byte) string {
+func fieldToStringASCII(data []byte) string {
 	return "\"" + string(data) + "\""
 }
 
@@ -250,3 +250,4 @@ func fieldToStringProtocolNumber(data []uint8) string {
 	default: return "\"unknwon\""
 	}
 }
+
